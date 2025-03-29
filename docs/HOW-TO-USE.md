@@ -2,6 +2,8 @@
 
 This guide explains how to use TinyHX.
 
+After do all of these step, follow ![these steps too!](./FIX-NEKO-DLL.md)
+
 ### Steps to Follow:
 1. Open the Start menu, search for the Command Prompt, and run it as an administrator:  
    ![Command Prompt](image.png)
