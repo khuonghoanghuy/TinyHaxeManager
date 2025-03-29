@@ -13,4 +13,4 @@ Tiny Haxe Manager is a tiny tool help you easily switch the Haxe version from 4.
 # Usage
 See ![How to use tinyHX](./docs/HOW-TO-USE.md)
 
-After use `tinyHX install` and `tinyHX use`, please restart your terminal to let the terminal know the System Variables Paths ;_;
+After use `tinyHX install` and `tinyHX use`, please restart your terminal to let the terminal know the Paths Variables ;_;
