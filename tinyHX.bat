@@ -68,68 +68,6 @@ echo.
 call :help
 exit /b 1
 
-:use
-if "%~1"=="" (
-    echo Error: Version number required
-    echo Usage: tinyHX use ^<version^>
-    exit /b 1
-)
-set "version=%~1"
-set "install_dir=haxe-ver\install\haxe-%version%"
-
-if not exist "%install_dir%" (
-    echo Error: Haxe version %version% is not installed
-    echo Use 'tinyHX install %version%' to install it first
-    exit /b 1
-)
-
-:: Get absolute paths
-for %%I in ("%install_dir%") do set "haxe_path=%%~fI"
-
-echo Updating system environment variables for Haxe %version%...
-
-:: Set HAXEPATH in both User and System environment
-powershell -Command "[Environment]::SetEnvironmentVariable('HAXEPATH', '%haxe_path%', 'User')"
-powershell -Command "[Environment]::SetEnvironmentVariable('HAXEPATH', '%haxe_path%', 'Machine')"
-set "HAXEPATH=%haxe_path%"
-
-:: Update PATH in both User and System environment
-for /f "tokens=*" %%a in ('powershell -command "[Environment]::GetEnvironmentVariable('PATH', 'Machine')"') do set "system_path=%%a"
-for /f "tokens=*" %%a in ('powershell -command "[Environment]::GetEnvironmentVariable('PATH', 'User')"') do set "user_path=%%a"
-
-:: Remove any existing Haxe paths from both PATHs
-set "clean_system_path=%system_path%"
-set "clean_user_path=%user_path%"
-for /d %%d in ("haxe-ver\install\haxe-*") do (
-    for %%I in ("%%d") do set "dir_path=%%~fI"
-    set "clean_system_path=!clean_system_path:%%I\=!"
-    set "clean_system_path=!clean_system_path:%%I=!"
-    set "clean_user_path=!clean_user_path:%%I\=!"
-    set "clean_user_path=!clean_user_path:%%I=!"
-)
-
-:: Add new paths to System PATH
-set "new_system_path=%clean_system_path%;%haxe_path%"
-powershell -Command "[Environment]::SetEnvironmentVariable('PATH', '%new_system_path%', 'Machine')"
-
-:: Update current session PATH (combines both System and User paths)
-set "PATH=%new_system_path%;%clean_user_path%"
-
-:: Broadcast environment changes
-echo Broadcasting environment changes to the system...
-powershell -Command "& {[void][System.Environment]::SetEnvironmentVariable('Path', [System.Environment]::GetEnvironmentVariable('Path', 'Machine'), 'Process')}"
-powershell -Command "& {[void][System.Environment]::SetEnvironmentVariable('HAXEPATH', [System.Environment]::GetEnvironmentVariable('HAXEPATH', 'Machine'), 'Process')}"
-
-echo Successfully switched to Haxe %version%
-echo System environment variables have been updated.
-echo.
-echo Current paths:
-echo HAXEPATH: %haxe_path%
-echo.
-echo You can verify the installation by running:
-echo haxe --version
-exit /b 0
-
 :list
 echo Installed Haxe versions:
 echo.
@@ -250,4 +188,51 @@ if not exist "%install_dir%" (
 echo Removing Haxe %version%...
 rmdir /s /q "%install_dir%"
 echo Successfully removed Haxe %version%
+exit /b 0
+
+:use
+if "%~1"=="" (
+    echo Error: Version number required
+    echo Usage: tinyHX use ^<version^>
+    exit /b 1
+)
+set "version=%~1"
+set "install_dir=haxe-ver\install\haxe-%version%"
+
+if not exist "%install_dir%" (
+    echo Error: Haxe version %version% is not installed
+    echo Use 'tinyHX install %version%' to install it first
+    exit /b 1
+)
+
+:: Get absolute paths
+for %%I in ("%install_dir%") do set "haxe_path=%%~fI"
+
+echo Updating PATH for Haxe %version%...
+
+:: Get current PATH
+set "current_path=%PATH%"
+
+:: Remove all existing Haxe paths from current PATH
+for /d %%d in ("%cd%\haxe-ver\install\haxe-*") do (
+    for %%I in ("%%d") do set "dir_path=%%~fI"
+    set "current_path=!current_path:%%I\=!"
+    set "current_path=!current_path:%%I=!"
+)
+
+:: Add new Haxe path at the beginning of PATH
+set "PATH=%haxe_path%;%current_path%"
+
+:: Update system PATH
+powershell -Command "[Environment]::SetEnvironmentVariable('PATH', '%PATH%', 'Machine')"
+
+:: Broadcast environment changes
+echo Broadcasting environment changes to the system...
+powershell -Command "& {[void][System.Environment]::SetEnvironmentVariable('Path', [System.Environment]::GetEnvironmentVariable('Path', 'Machine'), 'Process')}"
+
+echo Successfully switched to Haxe %version%
+echo System PATH has been updated.
+echo.
+echo You can verify the installation by running:
+echo haxe --version
 exit /b 0
