@@ -8,4 +8,4 @@ Tiny Haxe Manager is a tiny tool help you easily switch the Haxe version from 4.
 # Feature
 * Lightweight changing version: for real, the project is actually really small!
 * Simple as hell command: the command is so EASY to USE dude
-* Cool ass help menu: when use `tinyHX help`, is will back like: [!preImage1](./preview/pic1.png)
+* Cool ass help menu: when use `tinyHX help`, is will back like: ![preImage1](./preview/pic1.png)
