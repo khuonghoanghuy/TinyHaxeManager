@@ -3,13 +3,9 @@ setlocal enabledelayedexpansion
 
 :: Check for admin privileges
 net session >nul 2>&1
-if %errorlevel% neq 0 (
-    echo WARNING: This script needs administrator privileges to set system variables.
-    echo Please run this script as administrator.
-    echo.
-    echo To do this:
-    echo 1. Right-click on this script
-    echo 2. Select "Run as administrator"
+if %errorLevel% neq 0 (
+    echo WARNING: This script requires administrator privileges to set system variables.
+    echo Please run this script as administrator by right-clicking and selecting "Run as administrator".
     echo.
     echo Press any key to exit...
     pause >nul
@@ -89,7 +85,6 @@ if not exist "%install_dir%" (
 
 :: Get absolute paths
 for %%I in ("%install_dir%") do set "haxe_path=%%~fI"
-set "neko_path=%haxe_path%\neko"
 
 echo Updating system environment variables for Haxe %version%...
 
@@ -97,11 +92,6 @@ echo Updating system environment variables for Haxe %version%...
 powershell -Command "[Environment]::SetEnvironmentVariable('HAXEPATH', '%haxe_path%', 'User')"
 powershell -Command "[Environment]::SetEnvironmentVariable('HAXEPATH', '%haxe_path%', 'Machine')"
 set "HAXEPATH=%haxe_path%"
-
-:: Set NEKOPATH in both User and System environment
-powershell -Command "[Environment]::SetEnvironmentVariable('NEKOPATH', '%neko_path%', 'User')"
-powershell -Command "[Environment]::SetEnvironmentVariable('NEKOPATH', '%neko_path%', 'Machine')"
-set "NEKOPATH=%neko_path%"
 
 :: Update PATH in both User and System environment
 for /f "tokens=*" %%a in ('powershell -command "[Environment]::GetEnvironmentVariable('PATH', 'Machine')"') do set "system_path=%%a"
@@ -119,7 +109,7 @@ for /d %%d in ("haxe-ver\install\haxe-*") do (
 )
 
 :: Add new paths to System PATH
-set "new_system_path=%clean_system_path%;%haxe_path%;%neko_path%"
+set "new_system_path=%clean_system_path%;%haxe_path%"
 powershell -Command "[Environment]::SetEnvironmentVariable('PATH', '%new_system_path%', 'Machine')"
 
 :: Update current session PATH (combines both System and User paths)
@@ -129,27 +119,28 @@ set "PATH=%new_system_path%;%clean_user_path%"
 echo Broadcasting environment changes to the system...
 powershell -Command "& {[void][System.Environment]::SetEnvironmentVariable('Path', [System.Environment]::GetEnvironmentVariable('Path', 'Machine'), 'Process')}"
 powershell -Command "& {[void][System.Environment]::SetEnvironmentVariable('HAXEPATH', [System.Environment]::GetEnvironmentVariable('HAXEPATH', 'Machine'), 'Process')}"
-powershell -Command "& {[void][System.Environment]::SetEnvironmentVariable('NEKOPATH', [System.Environment]::GetEnvironmentVariable('NEKOPATH', 'Machine'), 'Process')}"
 
 echo Successfully switched to Haxe %version%
 echo System environment variables have been updated.
 echo.
 echo Current paths:
 echo HAXEPATH: %haxe_path%
-echo NEKOPATH: %neko_path%
 echo.
 echo You can verify the installation by running:
 echo haxe --version
-echo neko -version
 exit /b 0
 
 :list
 echo Installed Haxe versions:
 echo.
-for /d %%d in ("haxe-ver\install\haxe-*") do (
+for /d %%d in ("%cd%\haxe-ver\install\haxe-*") do (
     set "dir_name=%%~nxd"
     set "version=!dir_name:haxe-=!"
     echo !version!
+)
+if not exist "%cd%\haxe-ver\install\haxe-*" (
+    echo No Haxe versions installed.
+    echo Use 'tinyHX install <version>' to install a version.
 )
 exit /b 0
 
