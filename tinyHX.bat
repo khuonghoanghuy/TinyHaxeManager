@@ -165,6 +165,9 @@ set "download_url=https://github.com/HaxeFoundation/haxe/releases/download/%vers
 if exist "%install_dir%" (
     echo Haxe %version% is already installed at:
     echo %install_dir%
+    echo.
+    echo Switching to Haxe %version%...
+    call :use %version%
     exit /b 0
 )
 
@@ -232,9 +235,12 @@ if not exist "%install_dir%\haxe.exe" (
 :: Clean up
 del "%download_dir%\%zip_name%" 2>nul
 
+:: Clear screen and show success message
+cls
 echo Successfully installed Haxe %version% to:
 echo %install_dir%
 echo.
+echo Switching to Haxe %version%...
 echo Use 'tinyHX use %version%' to switch to this version
 exit /b 0
 
