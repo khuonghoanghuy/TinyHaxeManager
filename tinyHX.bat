@@ -1,23 +1,26 @@
 @echo off
 setlocal enabledelayedexpansion
 
-:: Load or create config
-if not exist "tinyHX_config.txt" (
-    set "INSTALL_PATH=%cd%"
-    echo %INSTALL_PATH%>tinyHX_config.txt
-) else (
+:: Load config if exists, otherwise set default
+if exist "tinyHX_config.txt" (
     set /p INSTALL_PATH=<tinyHX_config.txt
+) else (
+    set "INSTALL_PATH="
 )
-
-:: Create folders if they don't exist
-mkdir "%INSTALL_PATH%\haxe-ver" 2>nul
-mkdir "%INSTALL_PATH%\haxe-ver\downloads" 2>nul
-mkdir "%INSTALL_PATH%\haxe-ver\install" 2>nul
 
 :: Check if no arguments provided
 if "%~1"=="" (
-    call :help_without_args
-    exit /b 1
+    if "!INSTALL_PATH!"=="" (
+        echo Welcome to Tiny Haxe Manager!
+        echo.
+        echo Before you can use this tool, you need to set up your installation directory.
+        echo Please run: tinyHX change-path
+        echo.
+        exit /b 1
+    ) else (
+        call :help
+        exit /b 1
+    )
 )
 
 :: Main command handler
@@ -49,10 +52,19 @@ if "%command%"=="help" (
 exit /b 0
 
 :version
-echo 1.0.1
+echo 1.0.2
 exit /b 0
 
 :help
+if "!INSTALL_PATH!"=="" (
+    echo Welcome to Tiny Haxe Manager!
+    echo.
+    echo Before you can use this tool, you need to set up your installation directory.
+    echo Please run: tinyHX change-path
+    echo.
+    exit /b 1
+)
+
 echo Tiny Haxe Manager - A lightweight Haxe version manager
 echo.
 echo Usage: tinyHX ^<command^> [arguments]
@@ -66,7 +78,7 @@ echo   remove ^<version^>      Remove a specific Haxe version
 echo   change-path            Change the installation directory
 echo.
 echo Current installation path: %INSTALL_PATH%
-echo Version: 1.0.1
+echo Version: 1.0.2
 exit /b 0
 
 :change_path
@@ -110,6 +122,12 @@ echo Use 'tinyHX install <version>' to install versions in the new location.
 exit /b 0
 
 :list
+if "!INSTALL_PATH!"=="" (
+    echo Error: Installation path not set.
+    echo Please run: tinyHX change-path
+    exit /b 1
+)
+
 echo Installed Haxe versions:
 echo.
 for /d %%d in ("%INSTALL_PATH%\haxe-ver\install\haxe-*") do (
@@ -124,6 +142,12 @@ if not exist "%INSTALL_PATH%\haxe-ver\install\haxe-*" (
 exit /b 0
 
 :install
+if "!INSTALL_PATH!"=="" (
+    echo Error: Installation path not set.
+    echo Please run: tinyHX change-path
+    exit /b 1
+)
+
 if "%~1"=="" (
     echo Error: Version number required
     echo Usage: tinyHX install ^<version^>
@@ -212,6 +236,12 @@ echo Use 'tinyHX use %version%' to switch to this version
 exit /b 0
 
 :remove
+if "!INSTALL_PATH!"=="" (
+    echo Error: Installation path not set.
+    echo Please run: tinyHX change-path
+    exit /b 1
+)
+
 if "%~1"=="" (
     echo Error: Version number required
     echo Usage: tinyHX remove ^<version^>
@@ -231,6 +261,12 @@ echo Successfully removed Haxe %version%
 exit /b 0
 
 :use
+if "!INSTALL_PATH!"=="" (
+    echo Error: Installation path not set.
+    echo Please run: tinyHX change-path
+    exit /b 1
+)
+
 if "%~1"=="" (
     echo Error: Version number required
     echo Usage: tinyHX use ^<version^>
