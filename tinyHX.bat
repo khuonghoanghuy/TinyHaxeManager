@@ -1,9 +1,12 @@
 @echo off
 setlocal enabledelayedexpansion
 
+:: Get the directory where the script is located
+for %%I in ("%~dp0.") do set "SCRIPT_DIR=%%~fI"
+
 :: Load config if exists, otherwise set default
-if exist "tinyHX_config.txt" (
-    set /p INSTALL_PATH=<tinyHX_config.txt
+if exist "%SCRIPT_DIR%\tinyHX_config.txt" (
+    set /p INSTALL_PATH=<"%SCRIPT_DIR%\tinyHX_config.txt"
 ) else (
     set "INSTALL_PATH="
 )
@@ -105,8 +108,8 @@ if errorlevel 1 (
 :: Remove test directory
 rmdir "!new_path!\test" 2>nul
 
-:: Save new path
-echo !new_path!>tinyHX_config.txt
+:: Save new path to script directory
+echo !new_path!>"%SCRIPT_DIR%\tinyHX_config.txt"
 set "INSTALL_PATH=!new_path!"
 
 :: Create new directories
