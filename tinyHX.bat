@@ -38,6 +38,8 @@ if "%command%"=="help" (
     call :install %1
 ) else if "%command%"=="remove" (
     call :remove %1
+) else if "%command%"=="version" (
+    call :version
 ) else (
     echo Unknown command: %command%
     echo.
@@ -45,6 +47,10 @@ if "%command%"=="help" (
     exit /b 1
 )
 
+exit /b 0
+
+:version
+echo 1.0.1
 exit /b 0
 
 :help
@@ -60,6 +66,7 @@ echo   install ^<version^>     Install a specific Haxe version
 echo   remove ^<version^>      Remove a specific Haxe version
 echo.
 echo Note: This script requires administrator privileges to set system variables.
+echo Version: 1.0.1
 exit /b 0
 
 :help_without_args
@@ -210,8 +217,9 @@ for %%I in ("%install_dir%") do set "haxe_path=%%~fI"
 
 echo Updating PATH for Haxe %version%...
 
-:: Get current PATH
-set "current_path=%PATH%"
+:: Get current PATH from User environment
+set "current_path="
+for /f "tokens=*" %%a in ('powershell -Command "[Environment]::GetEnvironmentVariable('PATH', 'User')"') do set "current_path=%%a"
 
 :: Remove all existing Haxe paths from current PATH
 for /d %%d in ("%cd%\haxe-ver\install\haxe-*") do (
@@ -221,17 +229,17 @@ for /d %%d in ("%cd%\haxe-ver\install\haxe-*") do (
 )
 
 :: Add new Haxe path at the beginning of PATH
-set "PATH=%haxe_path%;%current_path%"
+set "new_path=%haxe_path%;%current_path%"
 
-:: Update system PATH
-powershell -Command "[Environment]::SetEnvironmentVariable('PATH', '%PATH%', 'Machine')"
+:: Update User PATH
+powershell -Command "[Environment]::SetEnvironmentVariable('PATH', '%new_path%', 'User')"
 
 :: Broadcast environment changes
 echo Broadcasting environment changes to the system...
-powershell -Command "& {[void][System.Environment]::SetEnvironmentVariable('Path', [System.Environment]::GetEnvironmentVariable('Path', 'Machine'), 'Process')}"
+powershell -Command "& {[void][System.Environment]::SetEnvironmentVariable('Path', [System.Environment]::GetEnvironmentVariable('Path', 'User'), 'Process')}"
 
 echo Successfully switched to Haxe %version%
-echo System PATH has been updated.
+echo User PATH has been updated.
 echo.
 echo You can verify the installation by running:
 echo haxe --version
