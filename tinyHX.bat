@@ -1,6 +1,9 @@
 @echo off
 setlocal enabledelayedexpansion
 
+:: Set version
+set "TINYHX_VERSION=1.0.2"
+
 :: Get the directory where the script is located
 for %%I in ("%~dp0.") do set "SCRIPT_DIR=%%~fI"
 
@@ -55,7 +58,7 @@ if "%command%"=="help" (
 exit /b 0
 
 :version
-echo 1.0.2
+echo %TINYHX_VERSION%
 exit /b 0
 
 :help
@@ -81,7 +84,7 @@ echo   remove ^<version^>      Remove a specific Haxe version
 echo   change-path            Change the installation directory
 echo.
 echo Current installation path: %INSTALL_PATH%
-echo Version: 1.0.2
+echo Version: %TINYHX_VERSION%
 exit /b 0
 
 :change_path
