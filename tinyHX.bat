@@ -212,8 +212,9 @@ if not exist "%install_dir%" (
     exit /b 1
 )
 
-:: Get absolute paths
-for %%I in ("%install_dir%") do set "haxe_path=%%~fI"
+:: Get relative paths
+set "haxe_path=%cd%\%install_dir%"
+set "haxelib_path=%cd%\%install_dir%\lib"
 
 echo Updating PATH for Haxe %version%...
 
@@ -223,13 +224,13 @@ for /f "tokens=*" %%a in ('powershell -Command "[Environment]::GetEnvironmentVar
 
 :: Remove all existing Haxe paths from current PATH
 for /d %%d in ("%cd%\haxe-ver\install\haxe-*") do (
-    for %%I in ("%%d") do set "dir_path=%%~fI"
+    set "dir_path=%cd%\%%d"
     set "current_path=!current_path:%%I\=!"
     set "current_path=!current_path:%%I=!"
 )
 
-:: Add new Haxe path at the beginning of PATH
-set "new_path=%haxe_path%;%current_path%"
+:: Add new Haxe and haxelib paths at the beginning of PATH
+set "new_path=%haxe_path%;%haxelib_path%;%current_path%"
 
 :: Update User PATH
 powershell -Command "[Environment]::SetEnvironmentVariable('PATH', '%new_path%', 'User')"
@@ -243,4 +244,5 @@ echo User PATH has been updated.
 echo.
 echo You can verify the installation by running:
 echo haxe --version
+echo haxelib --version
 exit /b 0
