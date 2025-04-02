@@ -1,21 +1,18 @@
 @echo off
 setlocal enabledelayedexpansion
 
-:: Check for admin privileges
-net session >nul 2>&1
-if %errorLevel% neq 0 (
-    echo WARNING: This script requires administrator privileges to set system variables.
-    echo Please run this script as administrator by right-clicking and selecting "Run as administrator".
-    echo.
-    echo Press any key to exit...
-    pause >nul
-    exit /b 1
+:: Load or create config
+if not exist "tinyHX_config.txt" (
+    set "INSTALL_PATH=%cd%"
+    echo %INSTALL_PATH%>tinyHX_config.txt
+) else (
+    set /p INSTALL_PATH=<tinyHX_config.txt
 )
 
 :: Create folders if they don't exist
-mkdir haxe-ver 2>nul
-mkdir haxe-ver\downloads 2>nul
-mkdir haxe-ver\install 2>nul
+mkdir "%INSTALL_PATH%\haxe-ver" 2>nul
+mkdir "%INSTALL_PATH%\haxe-ver\downloads" 2>nul
+mkdir "%INSTALL_PATH%\haxe-ver\install" 2>nul
 
 :: Check if no arguments provided
 if "%~1"=="" (
@@ -40,6 +37,8 @@ if "%command%"=="help" (
     call :remove %1
 ) else if "%command%"=="version" (
     call :version
+) else if "%command%"=="change-path" (
+    call :change_path
 ) else (
     echo Unknown command: %command%
     echo.
@@ -64,26 +63,61 @@ echo   use ^<version^>         Switch to specified Haxe version
 echo   list                    List all installed Haxe versions
 echo   install ^<version^>     Install a specific Haxe version
 echo   remove ^<version^>      Remove a specific Haxe version
+echo   change-path            Change the installation directory
 echo.
-echo Note: This script requires administrator privileges to set system variables.
+echo Current installation path: %INSTALL_PATH%
 echo Version: 1.0.1
 exit /b 0
 
-:help_without_args
-echo Error: No arguments provided
+:change_path
+echo Current installation path: %INSTALL_PATH%
 echo.
-call :help
-exit /b 1
+echo Please enter the new installation path:
+set /p "new_path="
+if "!new_path!"=="" (
+    echo No path provided. Keeping current path.
+    exit /b 0
+)
+
+:: Convert to absolute path
+for %%I in ("!new_path!") do set "new_path=%%~fI"
+
+:: Create test directory
+mkdir "!new_path!\test" 2>nul
+if errorlevel 1 (
+    echo Error: Cannot create directory at the specified path.
+    echo Please make sure you have write permissions.
+    exit /b 1
+)
+
+:: Remove test directory
+rmdir "!new_path!\test" 2>nul
+
+:: Save new path
+echo !new_path!>tinyHX_config.txt
+set "INSTALL_PATH=!new_path!"
+
+:: Create new directories
+mkdir "!new_path!\haxe-ver" 2>nul
+mkdir "!new_path!\haxe-ver\downloads" 2>nul
+mkdir "!new_path!\haxe-ver\install" 2>nul
+
+echo.
+echo Installation path updated to: !new_path!
+echo.
+echo Note: You may need to reinstall Haxe versions in the new location.
+echo Use 'tinyHX install <version>' to install versions in the new location.
+exit /b 0
 
 :list
 echo Installed Haxe versions:
 echo.
-for /d %%d in ("%cd%\haxe-ver\install\haxe-*") do (
+for /d %%d in ("%INSTALL_PATH%\haxe-ver\install\haxe-*") do (
     set "dir_name=%%~nxd"
     set "version=!dir_name:haxe-=!"
     echo !version!
 )
-if not exist "%cd%\haxe-ver\install\haxe-*" (
+if not exist "%INSTALL_PATH%\haxe-ver\install\haxe-*" (
     echo No Haxe versions installed.
     echo Use 'tinyHX install <version>' to install a version.
 )
@@ -96,14 +130,14 @@ if "%~1"=="" (
     exit /b 1
 )
 set "version=%~1"
-set "download_dir=haxe-ver\downloads"
-set "install_dir=haxe-ver\install\haxe-%version%"
+set "download_dir=%INSTALL_PATH%\haxe-ver\downloads"
+set "install_dir=%INSTALL_PATH%\haxe-ver\install\haxe-%version%"
 set "zip_name=haxe-%version%-win64.zip"
 set "download_url=https://github.com/HaxeFoundation/haxe/releases/download/%version%/%zip_name%"
 
 if exist "%install_dir%" (
     echo Haxe %version% is already installed at:
-    echo %cd%\%install_dir%
+    echo %install_dir%
     exit /b 0
 )
 
@@ -172,10 +206,9 @@ if not exist "%install_dir%\haxe.exe" (
 del "%download_dir%\%zip_name%" 2>nul
 
 echo Successfully installed Haxe %version% to:
-echo %cd%\%install_dir%
+echo %install_dir%
 echo.
 echo Use 'tinyHX use %version%' to switch to this version
-echo Note: You'll need to run 'tinyHX use %version%' as administrator to set system variables.
 exit /b 0
 
 :remove
@@ -185,7 +218,7 @@ if "%~1"=="" (
     exit /b 1
 )
 set "version=%~1"
-set "install_dir=haxe-ver\install\haxe-%version%"
+set "install_dir=%INSTALL_PATH%\haxe-ver\install\haxe-%version%"
 
 if not exist "%install_dir%" (
     echo Error: Haxe version %version% is not installed
@@ -204,7 +237,7 @@ if "%~1"=="" (
     exit /b 1
 )
 set "version=%~1"
-set "install_dir=haxe-ver\install\haxe-%version%"
+set "install_dir=%INSTALL_PATH%\haxe-ver\install\haxe-%version%"
 
 if not exist "%install_dir%" (
     echo Error: Haxe version %version% is not installed
@@ -213,8 +246,8 @@ if not exist "%install_dir%" (
 )
 
 :: Get relative paths
-set "haxe_path=%cd%\%install_dir%"
-set "haxelib_path=%cd%\%install_dir%\lib"
+set "haxe_path=%install_dir%"
+set "haxelib_path=%install_dir%\lib"
 
 echo Updating PATH for Haxe %version%...
 
@@ -223,8 +256,8 @@ set "current_path="
 for /f "tokens=*" %%a in ('powershell -Command "[Environment]::GetEnvironmentVariable('PATH', 'User')"') do set "current_path=%%a"
 
 :: Remove all existing Haxe paths from current PATH
-for /d %%d in ("%cd%\haxe-ver\install\haxe-*") do (
-    set "dir_path=%cd%\%%d"
+for /d %%d in ("%INSTALL_PATH%\haxe-ver\install\haxe-*") do (
+    set "dir_path=%%d"
     set "current_path=!current_path:%%I\=!"
     set "current_path=!current_path:%%I=!"
 )
@@ -235,9 +268,8 @@ set "new_path=%haxe_path%;%haxelib_path%;%current_path%"
 :: Update User PATH
 powershell -Command "[Environment]::SetEnvironmentVariable('PATH', '%new_path%', 'User')"
 
-:: Broadcast environment changes
-echo Broadcasting environment changes to the system...
-powershell -Command "& {[void][System.Environment]::SetEnvironmentVariable('Path', [System.Environment]::GetEnvironmentVariable('Path', 'User'), 'Process')}"
+:: Update current session PATH
+set "PATH=%new_path%"
 
 echo Successfully switched to Haxe %version%
 echo User PATH has been updated.
